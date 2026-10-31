@@ -4,7 +4,7 @@ Assignment 6: a Java application that will use the Visitor pattern to inspect so
 
 ## Current status
 
-Stages 1 through 3 are implemented: Java 17 Maven setup, five project element types, directory traversal, SecurityAuditVisitor, immutable security reports, and 16 JUnit 5 tests. Statistics, quality gates, compliance, the demo, and UML diagrams will follow in subsequent stages.
+Stages 1 through 4 are implemented: Java 17 Maven setup, five project element types, directory traversal, security auditing, project statistics, immutable reports, and 24 JUnit 5 tests. Quality gates, compliance, the demo, and UML diagrams will follow in subsequent stages.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ Smart Code Inspection and Compliance Engine
 mvn test
 ```
 
-Sixteen JUnit 5 tests cover element dispatch, directory traversal, validation, immutable collections, security findings, clean projects, missing dependency versions, and report snapshots. Later stages will add tests for the remaining visitors.
+Twenty-four JUnit 5 tests cover element dispatch, directory traversal, validation, immutable collections, security findings, clean projects, missing dependency versions, report snapshots, statistics aggregation, ratios, empty projects, and totals beyond the integer range. Later stages will add tests for the remaining visitors.
 
 ## Design
 
@@ -60,6 +60,29 @@ System.out.print(report.format());
 ```
 
 Use `org.example.visitor.SecurityAuditVisitor` and `org.example.report.SecurityReport`; `project` is any `ProjectElement`. Each visitor accumulates findings across visits, so create a new visitor for each independent audit. `getReport()` returns an immutable snapshot with file names, severity, descriptions, and a critical issue count for the future quality gate. The entry point remains a placeholder until the demo stage.
+
+## Project statistics
+
+`ProjectStatisticsVisitor` accumulates metrics from the same element tree and returns an immutable `ProjectStatisticsReport` snapshot through `getReport()`.
+
+| Metric | Definition |
+| --- | --- |
+| Total files | Source, test, configuration, and dependency files; directories are excluded |
+| Lines of code | Sum of source and test lines; other element types do not store line counts |
+| Tests | Sum of `TestFile.numberOfTests`, separate from the number of test files |
+| Dependencies | Number of dependency declarations across all dependency files, including repeated declarations |
+| Average complexity | Sum of source complexity divided by source file count |
+| Test/source ratio | Test file count divided by source file count; this is not code coverage |
+
+Both derived metrics return `0.0` when no source files exist. All source files contribute, including non-production files. Totals use `long`; derived values use floating-point division. Reports format decimal values with a dot regardless of the system locale.
+
+```java
+ProjectStatisticsVisitor statistics = new ProjectStatisticsVisitor();
+project.accept(statistics);
+System.out.print(statistics.getReport().format());
+```
+
+Import `org.example.visitor.ProjectStatisticsVisitor`. Create a new visitor for each independent analysis; repeated visits intentionally accumulate totals. Elements and directory traversal are unchanged.
 
 ## Development milestones
 
