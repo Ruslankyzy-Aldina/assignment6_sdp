@@ -193,6 +193,8 @@ The gate passes the file ratio even though UserService has no tests. Compliance 
 
 ## UML
 
+PNG images: [class diagram](docs/class-diagram.png) and [sequence diagram](docs/sequence-diagram.png).
+
 See [class and sequence diagrams](docs/uml.md). The class diagram shows element and visitor implementations, accept/visit relationships, directory children, report types, and quality gate delegation. The sequence diagram follows the security visitor through a directory to PaymentService.java.
 
 ## Design questions

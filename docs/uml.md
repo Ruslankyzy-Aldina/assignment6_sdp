@@ -4,6 +4,8 @@ These Mermaid diagrams describe the implementation through stage 8. Concrete ele
 
 ## Class diagram
 
+![UML class diagram](class-diagram.png)
+
 ```mermaid
 classDiagram
     class ProjectElement {
@@ -89,6 +91,8 @@ classDiagram
 Each concrete visitor implements all five `visit` overloads declared by `ProjectVisitor`. `Directory.accept` owns traversal; visitor directory methods do not traverse children. Aggregation shows that immutable elements and dependencies may be shared between trees.
 
 ## Sequence diagram
+
+![UML sequence diagram](sequence-diagram.png)
 
 This shows the security audit of `PaymentService.java` in the demo. Other children are omitted for readability.
 
