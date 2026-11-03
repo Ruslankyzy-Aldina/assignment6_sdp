@@ -4,7 +4,7 @@ Assignment 6: a Java application that will use the Visitor pattern to inspect so
 
 ## Current status
 
-Stages 1 through 7 are implemented: five project element types, four inspection visitors, immutable reports, a runnable fintech demo, UML diagrams, design explanations, and 42 JUnit 5 tests. TechnicalDebtVisitor and its tests remain for stage 8 as a separate commit.
+All eight implementation stages are complete: five project element types, five visitors, immutable reports, a runnable fintech demo, UML diagrams, design explanations, and 50 JUnit 5 tests. Stage 8 adds TechnicalDebtVisitor as a separate change without modifying existing element classes or ProjectVisitor.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ mvn clean package
 java -cp target/classes org.example.Main
 ```
 
-The application runs all four visitors on the same in-memory project and prints their reports, beginning with:
+The application runs all five visitors on the same in-memory project and prints their reports, beginning with:
 
 ```text
 Smart Code Inspection and Compliance Engine
@@ -31,13 +31,13 @@ Project: fintech-project
 mvn test
 ```
 
-Forty-two JUnit 5 tests cover element dispatch, traversal, validation, security findings, statistics, immutable snapshots, empty projects, large totals, and quality gate PASS/FAIL cases. Gate tests include threshold boundaries, critical findings, noncritical warnings, and consistency with standalone visitors. Compliance tests cover credentials, dependency rules, production test requirements, traversal order, empty projects, and immutable reports. Two integration tests verify the demo totals, consistency between visitors, and all four reports printed by Main. Stage 8 will add tests for the additional visitor.
+Fifty JUnit 5 tests cover element dispatch, traversal, validation, security findings, statistics, immutable snapshots, empty projects, large totals, and quality gate PASS/FAIL cases. Gate tests include threshold boundaries, critical findings, noncritical warnings, and consistency with standalone visitors. Compliance tests cover credentials, dependency rules, production test requirements, traversal order, empty projects, and immutable reports. Two integration tests verify the demo totals, consistency between visitors, and all five reports printed by Main. Eight technical debt tests cover rule weights, thresholds, empty test files, dependency combinations, traversal, immutable reports, and arithmetic beyond the integer range.
 
 ## Design
 
 `org.example.element.ProjectElement` declares `accept(ProjectVisitor visitor)`. Five immutable records implement it: `SourceCodeFile`, `TestFile`, `ConfigurationFile`, `DependencyFile`, and `Directory`. Source files store code metrics and security flags; test files store line and test counts and their target source file; configuration files store security flags. `Dependency` stores a dependency name, version, and vulnerability/prohibition flags. An empty version represents a missing version for future compliance checks.
 
-`org.example.visitor.ProjectVisitor` declares a typed `visit` method for each concrete element. Each element calls `visitor.visit(this)`. Runtime dispatch selects the element implementation, which selects the matching visit overload; runtime dispatch then selects the concrete visitor implementation. This is double dispatch without type checks. `Directory.accept` visits the directory first, then recursively visits its children in list order. Visitors must not traverse children themselves. Lists are defensively copied, names must be nonblank, and metrics must be nonnegative. Separate visitors audit security, collect statistics, evaluate release quality gates, and check compliance. A technical debt visitor will be introduced later without changing the existing elements.
+`org.example.visitor.ProjectVisitor` declares a typed `visit` method for each concrete element. Each element calls `visitor.visit(this)`. Runtime dispatch selects the element implementation, which selects the matching visit overload; runtime dispatch then selects the concrete visitor implementation. This is double dispatch without type checks. `Directory.accept` visits the directory first, then recursively visits its children in list order. Visitors must not traverse children themselves. Lists are defensively copied, names must be nonblank, and metrics must be nonnegative. Separate visitors audit security, collect statistics, evaluate release quality gates, and check compliance. TechnicalDebtVisitor adds effort estimates without changing the existing elements or visitor interface.
 
 ## Security audit
 
@@ -60,7 +60,7 @@ SecurityReport report = audit.getReport();
 System.out.print(report.format());
 ```
 
-Use `org.example.visitor.SecurityAuditVisitor` and `org.example.report.SecurityReport`; `project` is any `ProjectElement`. Each visitor accumulates findings across visits, so create a new visitor for each independent audit. `getReport()` returns an immutable snapshot with file names, severity, descriptions, and a critical issue count used by the quality gate. Main demonstrates all four visitors on the same project.
+Use `org.example.visitor.SecurityAuditVisitor` and `org.example.report.SecurityReport`; `project` is any `ProjectElement`. Each visitor accumulates findings across visits, so create a new visitor for each independent audit. `getReport()` returns an immutable snapshot with file names, severity, descriptions, and a critical issue count used by the quality gate. Main demonstrates all five visitors on the same project.
 
 ## Project statistics
 
@@ -136,6 +136,32 @@ System.out.print(compliance.getReport().format());
 
 Import `org.example.visitor.ComplianceVisitor`. Create a fresh visitor for each independent analysis. `ComplianceReport.compliant()` is true only when there are no violations. An empty project passes these rules, although it fails the quality gate's test ratio requirement. Security flags for vulnerable dependencies, high-risk sources, and insecure configuration remain the responsibility of the security audit; compliance and release quality reports are separate.
 
+## Technical debt estimate
+
+`TechnicalDebtVisitor` implements the existing five visit methods. No element classes, traversal logic, or ProjectVisitor methods were changed to add it. It returns an immutable `TechnicalDebtReport` with per-file reasons and estimated minutes.
+
+| Condition | Estimated effort |
+| --- | --- |
+| Source complexity above 10 | 30 minutes per excess complexity point |
+| High-risk source flag | 60 minutes |
+| Test file with zero test cases | 30 minutes |
+| Insecure configuration | 30 minutes |
+| Vulnerable dependency | 120 minutes per declaration |
+| Missing dependency version | 30 minutes per declaration |
+| Prohibited dependency | 60 minutes per declaration |
+
+Rules are additive, including multiple findings on the same file or dependency. Directories add no effort. Complexity at or below 10 adds no complexity debt. Totals use `long` to avoid overflowing the integer range when multiplying source complexity.
+
+These are fixed educational heuristics, not measured delivery estimates. They do not cover every security or compliance finding: exposed credentials and missing production test files remain visible in the corresponding reports. Debt does not affect the release gate.
+
+```java
+TechnicalDebtVisitor debt = new TechnicalDebtVisitor();
+project.accept(debt);
+System.out.print(debt.getReport().format());
+```
+
+Import `org.example.visitor.TechnicalDebtVisitor`. Use a fresh visitor for each independent analysis. The demo estimates 120 minutes for PaymentService, 30 for configuration, and 210 for dependencies: 360 minutes in total.
+
 ## Demo project
 
 `org.example.demo.FintechProject.create()` builds this structure in memory. It models file metadata; it does not create or scan these files on disk. Dependency names and security flags are fictional demonstration data.
@@ -161,6 +187,7 @@ The payment source has hardcoded credentials and a high-risk flag. Configuration
 | Derived metrics | Average complexity 9.00; test/source ratio 0.50 |
 | Quality gate | Security FAIL, Complexity PASS, Tests PASS; final FAILED |
 | Compliance | 5 violations; final FAIL |
+| Technical debt | 6 items; estimated effort 360 minutes |
 
 The gate passes the file ratio even though UserService has no tests. Compliance catches that separate per-source requirement. The demo exits normally after printing failed inspection results; it is not a CI command with failure exit codes.
 
@@ -176,7 +203,7 @@ The same project tree needs several independent inspections. Visitor separates t
 
 ### Where are Element and Visitor?
 
-`org.example.element.ProjectElement` is the Element interface. SourceCodeFile, TestFile, ConfigurationFile, DependencyFile, and Directory implement it. `org.example.visitor.ProjectVisitor` is the Visitor interface; the four inspection visitors implement its five overloads.
+`org.example.element.ProjectElement` is the Element interface. SourceCodeFile, TestFile, ConfigurationFile, DependencyFile, and Directory implement it. `org.example.visitor.ProjectVisitor` is the Visitor interface; the five inspection visitors implement its five overloads.
 
 ### What is double dispatch?
 
@@ -192,7 +219,7 @@ Adding a visitor is easier: implement the existing visit methods and use it with
 
 ### What happens when DatabaseMigrationFile is added?
 
-Add a DatabaseMigrationFile class implementing ProjectElement with its data and `accept` calling `visitor.visit(this)`. Add `visit(DatabaseMigrationFile file)` to ProjectVisitor. Implement that overload in SecurityAuditVisitor, ProjectStatisticsVisitor, QualityGateVisitor, and ComplianceVisitor, plus any later visitor such as TechnicalDebtVisitor. QualityGateVisitor must forward the new type to its delegated visitors. Test visitors such as RecordingVisitor must also implement the overload.
+Add a DatabaseMigrationFile class implementing ProjectElement with its data and `accept` calling `visitor.visit(this)`. Add `visit(DatabaseMigrationFile file)` to ProjectVisitor. Implement that overload in SecurityAuditVisitor, ProjectStatisticsVisitor, QualityGateVisitor, ComplianceVisitor, and TechnicalDebtVisitor. QualityGateVisitor must forward the new type to its delegated visitors. Test visitors such as RecordingVisitor must also implement the overload.
 
 Without the interface overload, the new element's accept call does not compile. After adding the overload, concrete visitors fail to compile until they implement it. Existing element classes and Directory traversal do not need changes. Add migration fixtures and tests, update the UML, and extend reports only if the new rules need additional metrics. This is Visitor's tradeoff: adding operations is easy, but expanding the element hierarchy affects all visitors.
 
@@ -223,4 +250,4 @@ Strategy provides interchangeable implementations of one algorithm behind a comm
 7. Add the fintech demo, UML diagrams, and design explanations; complete core test coverage.
 8. Add `TechnicalDebtVisitor` and its tests in a separate commit, then update the demo and documentation.
 
-Stage 8 will add TechnicalDebtVisitor without changing existing elements, then update the demo, UML, and tests.
+TechnicalDebtVisitor implements the existing visitor contract. Its separate development stage demonstrates adding an operation without changing the element hierarchy.

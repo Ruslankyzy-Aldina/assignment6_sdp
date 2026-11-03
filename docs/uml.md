@@ -1,6 +1,6 @@
 # UML diagrams
 
-These Mermaid diagrams describe the implementation through stage 7. Concrete elements and reports are Java records. Fields are abbreviated to focus on Visitor relationships. GitHub renders the diagrams directly.
+These Mermaid diagrams describe the implementation through stage 8. Concrete elements and reports are Java records. Fields are abbreviated to focus on Visitor relationships. GitHub renders the diagrams directly.
 
 ## Class diagram
 
@@ -46,6 +46,9 @@ classDiagram
     class ComplianceVisitor {
         +getReport() ComplianceReport
     }
+    class TechnicalDebtVisitor {
+        +getReport() TechnicalDebtReport
+    }
     ProjectElement <|.. SourceCodeFile
     ProjectElement <|.. TestFile
     ProjectElement <|.. ConfigurationFile
@@ -63,6 +66,7 @@ classDiagram
     ProjectVisitor <|.. ProjectStatisticsVisitor
     ProjectVisitor <|.. QualityGateVisitor
     ProjectVisitor <|.. ComplianceVisitor
+    ProjectVisitor <|.. TechnicalDebtVisitor
     ProjectVisitor ..> SourceCodeFile : visit parameter
     ProjectVisitor ..> TestFile : visit parameter
     ProjectVisitor ..> ConfigurationFile : visit parameter
@@ -74,6 +78,8 @@ classDiagram
     ProjectStatisticsVisitor ..> ProjectStatisticsReport : creates
     QualityGateVisitor ..> QualityGateReport : creates
     ComplianceVisitor ..> ComplianceReport : creates
+    TechnicalDebtVisitor ..> TechnicalDebtReport : creates
+    TechnicalDebtReport o-- TechnicalDebtItem : items
     SecurityReport o-- SecurityIssue : issues
     ComplianceReport o-- ComplianceViolation : violations
     QualityGateReport --> SecurityReport : security

@@ -10,6 +10,7 @@ import org.example.visitor.ComplianceVisitor;
 import org.example.visitor.ProjectStatisticsVisitor;
 import org.example.visitor.QualityGateVisitor;
 import org.example.visitor.SecurityAuditVisitor;
+import org.example.visitor.TechnicalDebtVisitor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,11 +23,13 @@ class FintechProjectTest {
         ProjectStatisticsVisitor statistics = new ProjectStatisticsVisitor();
         QualityGateVisitor quality = new QualityGateVisitor();
         ComplianceVisitor compliance = new ComplianceVisitor();
+        TechnicalDebtVisitor debt = new TechnicalDebtVisitor();
 
         project.accept(security);
         project.accept(statistics);
         project.accept(quality);
         project.accept(compliance);
+        project.accept(debt);
 
         assertEquals("fintech-project", project.name());
         assertEquals(new ProjectStatisticsReport(5, 2, 1, 390, 6, 2, 18), statistics.getReport());
@@ -41,10 +44,12 @@ class FintechProjectTest {
         assertEquals(5, compliance.getReport().violations().size());
         assertFalse(compliance.getReport().compliant());
         assertTrue(compliance.getReport().format().contains("[MISSING_TESTS] UserService.java"));
+        assertEquals(6, debt.getReport().items().size());
+        assertEquals(360, debt.getReport().totalMinutes());
     }
 
     @Test
-    void entryPointPrintsAllFourReports() {
+    void entryPointPrintsAllFiveReports() {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PrintStream original = System.out;
         try (PrintStream capture = new PrintStream(output, true, StandardCharsets.UTF_8)) {
@@ -59,6 +64,7 @@ class FintechProjectTest {
         assertTrue(text.contains("Project statistics\nTotal files: 5"));
         assertTrue(text.contains("Security: FAIL\nComplexity: PASS\nTests: PASS\n\nFINAL RESULT: FAILED"));
         assertTrue(text.contains("Compliance check\nViolations: 5"));
-        assertTrue(text.endsWith("FINAL RESULT: FAIL\n"));
+        assertTrue(text.contains("FINAL RESULT: FAIL\n"));
+        assertTrue(text.contains("Technical debt estimate\nItems: 6\nEstimated effort (minutes): 360"));
     }
 }
