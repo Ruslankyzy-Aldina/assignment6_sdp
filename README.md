@@ -4,7 +4,7 @@ Assignment 6: a Java application that will use the Visitor pattern to inspect so
 
 ## Current status
 
-Stages 1 through 5 are implemented: Java 17 Maven setup, five project element types, directory traversal, security auditing, project statistics, quality gates, immutable reports, and 32 JUnit 5 tests. Compliance, the demo, and UML diagrams will follow in subsequent stages.
+Stages 1 through 6 are implemented: Java 17 Maven setup, five project element types, directory traversal, security auditing, project statistics, quality gates, compliance checks, immutable reports, and 40 JUnit 5 tests. The demo, UML diagrams, and additional visitor will follow in subsequent stages.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ Smart Code Inspection and Compliance Engine
 mvn test
 ```
 
-Thirty-two JUnit 5 tests cover element dispatch, traversal, validation, security findings, statistics, immutable snapshots, empty projects, large totals, and quality gate PASS/FAIL cases. Gate tests include threshold boundaries, critical findings, noncritical warnings, and consistency with standalone visitors. Later stages will add tests for the remaining visitors.
+Forty JUnit 5 tests cover element dispatch, traversal, validation, security findings, statistics, immutable snapshots, empty projects, large totals, and quality gate PASS/FAIL cases. Gate tests include threshold boundaries, critical findings, noncritical warnings, and consistency with standalone visitors. Compliance tests cover credentials, dependency rules, production test requirements, traversal order, empty projects, and immutable reports. Later stages will add tests for the additional visitor.
 
 ## Design
 
@@ -50,7 +50,7 @@ Thirty-two JUnit 5 tests cover element dispatch, traversal, validation, security
 | High-risk source file | HIGH |
 | Insecure configuration | HIGH |
 
-Test files and directories have no direct security rules. Directory traversal remains in `Directory.accept`. Prohibited dependencies and missing versions are reserved for the compliance visitor.
+Test files and directories have no direct security rules. Directory traversal remains in `Directory.accept`. Prohibited dependencies and missing versions are checked by the compliance visitor.
 
 ```java
 SecurityAuditVisitor audit = new SecurityAuditVisitor();
@@ -113,6 +113,27 @@ Tests: FAIL
 
 FINAL RESULT: FAILED
 ```
+
+## Compliance checks
+
+`ComplianceVisitor` checks four rules:
+
+- Source and configuration files must not expose credentials.
+- Every dependency must have a nonblank version.
+- Dependencies marked as prohibited are not allowed.
+- Each production source must have a matching test file containing at least one test.
+
+The last rule matches `TestFile.testedSourceFile` to `SourceCodeFile.name` exactly. Use unique source identifiers across the project, such as project-relative paths when modules have identical file names, and the same identifier in the test. Directory names are not automatically prefixed. Non-production sources do not require tests.
+
+Production test checks are evaluated in `getReport()` after collecting visited sources and tests. Tests can appear before or after sources, including in other nested directories. Read the final report after the complete traversal. Reports are immutable snapshots; repeated report reads do not add violations or change visitor state.
+
+```java
+ComplianceVisitor compliance = new ComplianceVisitor();
+project.accept(compliance);
+System.out.print(compliance.getReport().format());
+```
+
+Import `org.example.visitor.ComplianceVisitor`. Create a fresh visitor for each independent analysis. `ComplianceReport.compliant()` is true only when there are no violations. An empty project passes these rules, although it fails the quality gate's test ratio requirement. Security flags for vulnerable dependencies, high-risk sources, and insecure configuration remain the responsibility of the security audit; compliance and release quality reports are separate.
 
 ## Development milestones
 
