@@ -4,7 +4,7 @@ Assignment 6: a Java application that will use the Visitor pattern to inspect so
 
 ## Current status
 
-Stages 1 through 4 are implemented: Java 17 Maven setup, five project element types, directory traversal, security auditing, project statistics, immutable reports, and 24 JUnit 5 tests. Quality gates, compliance, the demo, and UML diagrams will follow in subsequent stages.
+Stages 1 through 5 are implemented: Java 17 Maven setup, five project element types, directory traversal, security auditing, project statistics, quality gates, immutable reports, and 32 JUnit 5 tests. Compliance, the demo, and UML diagrams will follow in subsequent stages.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ Smart Code Inspection and Compliance Engine
 mvn test
 ```
 
-Twenty-four JUnit 5 tests cover element dispatch, directory traversal, validation, immutable collections, security findings, clean projects, missing dependency versions, report snapshots, statistics aggregation, ratios, empty projects, and totals beyond the integer range. Later stages will add tests for the remaining visitors.
+Thirty-two JUnit 5 tests cover element dispatch, traversal, validation, security findings, statistics, immutable snapshots, empty projects, large totals, and quality gate PASS/FAIL cases. Gate tests include threshold boundaries, critical findings, noncritical warnings, and consistency with standalone visitors. Later stages will add tests for the remaining visitors.
 
 ## Design
 
@@ -83,6 +83,36 @@ System.out.print(statistics.getReport().format());
 ```
 
 Import `org.example.visitor.ProjectStatisticsVisitor`. Create a new visitor for each independent analysis; repeated visits intentionally accumulate totals. Elements and directory traversal are unchanged.
+
+## Release quality gate
+
+`QualityGateVisitor` forwards each typed visit to its own security and statistics visitors. The directory performs traversal once; the gate does not recursively revisit children. Existing elements and visitors remain unchanged.
+
+| Check | PASS condition |
+| --- | --- |
+| Security | Zero CRITICAL issues |
+| Complexity | Average source complexity <= 10 |
+| Tests | Test file count / source file count >= 0.40 |
+
+All three checks must pass. HIGH severity findings remain visible in the security report but do not block this gate. The ratio measures file counts, not test case counts or coverage. Empty and test-only projects fail the test check because their ratio is defined as zero. These checks are the assignment's release criteria, not a complete production readiness assessment.
+
+```java
+QualityGateVisitor gate = new QualityGateVisitor();
+project.accept(gate);
+System.out.print(gate.getReport().format());
+```
+
+Import `org.example.visitor.QualityGateVisitor`. Create a fresh visitor for each independent project. `getReport()` returns a `QualityGateReport` snapshot containing both underlying reports, individual check results, and the combined `passed()` result. Evaluation uses unrounded metrics.
+
+Example output for a project with insufficient test files:
+
+```text
+Security: PASS
+Complexity: PASS
+Tests: FAIL
+
+FINAL RESULT: FAILED
+```
 
 ## Development milestones
 
